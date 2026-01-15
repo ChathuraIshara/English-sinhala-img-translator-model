@@ -110,19 +110,51 @@ def predict_image(img: Image.Image) -> dict:
     Processes the image and maps the prediction to the actual Sinhala letter.
     """
     img_t = transform(img).unsqueeze(0).to(device)
+
+
     with torch.no_grad():
         outputs = model(img_t)
         pred_idx = outputs.argmax(1).item()
-
+        
     # Resolve all mapping via shared helper
     folder_name, alphabet_index, predicted_letter = get_label_info_for_model_index(pred_idx)
 
     return {
         "folder_name": folder_name,
-        "prediction": predicted_letter,
+        "predicted_letter": predicted_letter,
         "class_index": pred_idx,
         "alphabet_index": alphabet_index
     }
+
+def folder_to_sinhala(folder_name: str) -> str:
+    """
+    Convert dataset folder name (e.g. '17') to real Sinhala character.
+    """
+    # Step 1 — get alphabet index
+    alphabet_index = handwritten_constants.CLASS_INDICES.get(str(folder_name))
+
+    if alphabet_index is None:
+        return "Unknown"
+
+    # Step 2 — get broken label
+    raw_label = handwritten_constants.TRUE_LABEL[alphabet_index]
+
+    # Step 3 — fix encoding
+    return ftfy.fix_text(raw_label)
+
+
+def get_label_info_for_model_index(model_index: int):
+    # model → folder
+    folder_name = str(idx_to_char[str(model_index)])
+
+    # folder → Sinhala
+    sinhala_letter = folder_to_sinhala(folder_name)
+
+    # also return alphabet index (optional)
+    alphabet_index = handwritten_constants.CLASS_INDICES.get(folder_name)
+
+    return folder_name, alphabet_index, sinhala_letter
+
 
 def load_image_from_disk(path: str) -> Image.Image:
     resolved = path if os.path.isabs(path) else os.path.join(os.getcwd(), path)
