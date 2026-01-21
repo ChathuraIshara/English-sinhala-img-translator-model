@@ -1,6 +1,5 @@
 flask==2.3.0
 flask-cors==4.0.0
-torch>=2.5.0
-torchvision>=0.20.0
+torch>=2.0,<2.3
+torchvision>=0.15,<0.18
 pillow==9.5.0
-ftfy==6.1.1
